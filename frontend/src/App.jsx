@@ -1,39 +1,46 @@
-import React, { useRef, useEffect, useState } from "react";
-import { useHandTracking } from "./hooks/useHandTracking.js";
+import React, { useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import ProceduralWatch from "./components/ProceduralWatch.jsx";
+import WATCH_CATALOG from "./data/watchCatalog.js";
 
 export default function App() {
-  const videoRef = useRef(null);
-  const [videoElement, setVideoElement] = useState(null);
-
-  useEffect(() => {
-    async function startCamera() {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720 },
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => setVideoElement(videoRef.current);
-      }
-    }
-    startCamera();
-  }, []);
-
-  const { landmarks, isReady, fps, latency, error } = useHandTracking(videoElement);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const watch = WATCH_CATALOG[selectedIndex];
 
   return (
-    <div style={{ background: "#0a0a0a", color: "#e8e8e8", minHeight: "100vh", padding: 20 }}>
-      <h1>Phase 3: Hand Tracking Test</h1>
-      <video ref={videoRef} autoPlay playsInline muted style={{ width: 640, transform: "scaleX(-1)" }} />
-      <div style={{ marginTop: 12, fontFamily: "monospace" }}>
-        <p>Model Ready: {isReady ? "✅ Yes" : "⏳ Loading..."}</p>
-        <p>FPS: {fps}</p>
-        <p>Latency: {latency}ms</p>
-        <p>Hand Detected: {landmarks ? "✅ Yes" : "❌ No"}</p>
-        {landmarks && (
-          <p>Wrist Position: x={landmarks[0].x.toFixed(3)}, y={landmarks[0].y.toFixed(3)}</p>
-        )}
-        {error && <p style={{ color: "red" }}>Error: {error}</p>}
+    <div style={{ height: "100vh" }}>
+      <div style={{ padding: 16 }}>
+        <h1>Phase 4: Watch Model Test</h1>
+        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          {WATCH_CATALOG.map((w, i) => (
+            <button
+              key={w.id}
+              onClick={() => setSelectedIndex(i)}
+              style={{
+                padding: "6px 12px",
+                background: i === selectedIndex ? "#4a90d9" : "#333",
+                color: "#fff",
+                border: "none",
+                borderRadius: 4,
+                cursor: "pointer",
+              }}
+            >
+              {w.name}
+            </button>
+          ))}
+        </div>
       </div>
+      <Canvas
+        camera={{ position: [0, 0, 1.5], fov: 50 }}
+        style={{ height: "calc(100vh - 100px)" }}
+      >
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[2, 3, 5]} intensity={1.0} />
+        <directionalLight position={[-2, -1, 3]} intensity={0.4} />
+        <ProceduralWatch config={watch} visible={true} />
+        <OrbitControls />
+      </Canvas>
     </div>
   );
 }
